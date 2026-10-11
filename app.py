@@ -8,6 +8,15 @@ import streamlit as st
 # ---- Your backend (chatbot.py) ----
 from Chatbot import extract_video_id, build_rag_chain, ask_question
 
+# ---- Request limit per browser session ----
+MAX_REQUESTS = 3
+
+LIMIT_MESSAGE = (
+    "😄 Hello dear! Lagta hai aap sirf check karne aaye hain ke is project ke "
+    "peeche kya hai. Is ke requests limited hain, jo sab aap bhej dogay "
+    "toh baki kya khaingay? 🍛 Aaj ke liye itna kafi hai, **bye bye!** 👋"
+)
+
 st.set_page_config(
     page_title="TubeChat AI",
     page_icon="🎬",
@@ -308,6 +317,7 @@ def set_pending(prompt):
 st.session_state.setdefault("theme", "night")
 st.session_state.setdefault("video_id", None)
 st.session_state.setdefault("messages", [])
+st.session_state.setdefault("request_count", 0)
 
 inject_theme(st.session_state.theme)
 
@@ -425,13 +435,19 @@ else:
                 st.markdown(question)
 
             with st.chat_message("assistant", avatar=AVATARS["assistant"]):
-                box = st.empty()
-                try:
-                    answer = answer_with_animation(chain, question, box)
-                    typewriter(box, answer)
-                except Exception as e:
-                    answer = f"⚠️ Something went wrong: {e}"
-                    box.markdown(answer)
+                if st.session_state.request_count >= MAX_REQUESTS:
+                    # Limit reached: show the funny message, skip the LLM call
+                    answer = LIMIT_MESSAGE
+                    st.markdown(answer)
+                else:
+                    st.session_state.request_count += 1
+                    box = st.empty()
+                    try:
+                        answer = answer_with_animation(chain, question, box)
+                        typewriter(box, answer)
+                    except Exception as e:
+                        answer = f"⚠️ Something went wrong: {e}"
+                        box.markdown(answer)
 
             st.session_state.messages.append({"role": "user", "content": question})
             st.session_state.messages.append({"role": "assistant", "content": answer})
