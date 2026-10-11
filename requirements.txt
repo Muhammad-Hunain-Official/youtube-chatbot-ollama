@@ -3,6 +3,7 @@ youtube-transcript-api
 streamlit
 langchain
 langchain-community
+sentence-transformers
 langchain-huggingface
 langchain-core
 langchain-text-splitters
