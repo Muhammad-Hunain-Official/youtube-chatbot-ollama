@@ -5,7 +5,8 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_ollama import ChatOllama
+import streamlit as st
+from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import (
     RunnableParallel,
@@ -111,10 +112,12 @@ def build_rag_chain(video_id):
     )
 
     # 6. Local Ollama LLM
-    llm = ChatOllama(
-        model="qwen2.5:0.5b",
-        temperature=0
-    )
+    llm = ChatOpenAI(
+    model="gpt-oss:20b",
+    base_url="https://ollama.com/v1",
+    api_key=st.secrets["OLLAMA_API_KEY"],
+    temperature=0,
+)
 
     # 7. Prompt
     prompt = ChatPromptTemplate.from_template(

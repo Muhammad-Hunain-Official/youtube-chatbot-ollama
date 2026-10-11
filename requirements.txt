@@ -5,6 +5,7 @@ langchain
 langchain-community
 sentence-transformers
 langchain-huggingface
+requests
 langchain-core
 langchain-text-splitters
 langchain-ollama
