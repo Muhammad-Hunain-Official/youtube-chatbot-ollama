@@ -58,6 +58,7 @@ THEMES = {
         "border": "rgba(255,255,255,0.13)",
         "input": "rgba(255,255,255,0.08)",
         "input_solid": "#1a1f3d",
+        "input_text": "#eef1ff",
         "a1": "#8b6cff", "a2": "#22d3ee",
         "shadow": "0 10px 40px rgba(0,0,0,0.45)",
         "orb": "0.45",
@@ -69,6 +70,7 @@ THEMES = {
         "border": "rgba(108,76,255,0.18)",
         "input": "rgba(255,255,255,0.95)",
         "input_solid": "#ffffff",
+        "input_text": "#111111",
         "a1": "#6c4cff", "a2": "#0aa5d6",
         "shadow": "0 10px 35px rgba(108,76,255,0.15)",
         "orb": "0.35",
@@ -142,18 +144,30 @@ STATIC_CSS = """
 
 /* ---------- inputs ---------- */
 .stTextInput [data-baseweb="input"],
-.stTextInput [data-baseweb="base-input"] {
-    background: var(--input) !important;
+.stTextInput [data-baseweb="base-input"],
+.stTextArea [data-baseweb="textarea"],
+.stTextArea [data-baseweb="base-input"] {
+    background: var(--input-solid) !important;
     border-radius: 14px !important;
     border: 1px solid var(--border) !important;
 }
-.stTextInput input {
+.stTextInput [data-baseweb="input"] > div,
+.stTextArea [data-baseweb="textarea"] > div {
     background: transparent !important;
-    color: var(--text) !important;
-    -webkit-text-fill-color: var(--text) !important;
-    caret-color: var(--a2) !important;
+}
+.stTextInput input,
+.stTextArea textarea {
+    background: transparent !important;
+    color: var(--input-text) !important;
+    -webkit-text-fill-color: var(--input-text) !important;
+    caret-color: var(--a1) !important;
     border: none !important;
     padding: .8rem 1rem !important;
+}
+/* browser autofill can force its own colors */
+.stTextInput input:-webkit-autofill {
+    -webkit-text-fill-color: var(--input-text) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--input-solid) inset !important;
 }
 .stTextInput [data-baseweb="input"]:focus-within {
     border-color: var(--a1) !important;
@@ -257,7 +271,7 @@ def inject_theme(mode):
     variables = f""":root {{
         --bg1:{t['bg1']}; --bg2:{t['bg2']}; --bg3:{t['bg3']};
         --text:{t['text']}; --muted:{t['muted']};
-        --card:{t['card']}; --border:{t['border']}; --input:{t['input']}; --input-solid:{t['input_solid']};
+        --card:{t['card']}; --border:{t['border']}; --input:{t['input']}; --input-solid:{t['input_solid']}; --input-text:{t['input_text']};
         --a1:{t['a1']}; --a2:{t['a2']}; --shadow:{t['shadow']}; --orb:{t['orb']};
     }}"""
     st.markdown(f"<style>{variables}{STATIC_CSS}</style>", unsafe_allow_html=True)
