@@ -82,8 +82,18 @@ def format_docs(retrieved_docs):
 def build_rag_chain(video_id):
     """Transcript se FAISS RAG chain banata hai."""
 
-    # 1. YouTube transcript
-    transcript = get_transcript(video_id)
+def build_rag_chain(video_id, transcript=None):
+    """YouTube ya manually provided transcript se RAG chain banata hai."""
+
+    # 1. Fetch transcript automatically if not provided
+    if transcript is None:
+        transcript = get_transcript(video_id)
+
+    # Validate transcript
+    if not transcript or not transcript.strip():
+        raise ValueError(
+            "Transcript is empty. Please provide a valid transcript."
+        )
 
     # 2. Text chunking
     splitter = RecursiveCharacterTextSplitter(

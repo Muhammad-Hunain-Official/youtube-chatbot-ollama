@@ -29,9 +29,8 @@ st.set_page_config(
 # =====================================================================
 
 @st.cache_resource(show_spinner=False)
-def get_chain(video_id):
-    return build_rag_chain(video_id)
-
+def get_chain(video_id, transcript=None):
+    return build_rag_chain(video_id, transcript)
 
 # =====================================================================
 #  UI DATA
@@ -318,6 +317,9 @@ st.session_state.setdefault("theme", "night")
 st.session_state.setdefault("video_id", None)
 st.session_state.setdefault("messages", [])
 st.session_state.setdefault("request_count", 0)
+st.session_state.setdefault("pending_video_id", None)
+st.session_state.setdefault("transcript_error", None)
+st.session_state.setdefault("loaded_transcript", None)
 
 inject_theme(st.session_state.theme)
 
@@ -358,21 +360,106 @@ with in_col:
 with btn_col:
     load_clicked = st.button("🚀 Load video", use_container_width=True)
 
+
 if load_clicked:
+    vid = None
+
     try:
         vid = extract_video_id(url_input)
-        with st.spinner("Reading the transcript and building the knowledge base..."):
+
+        with st.spinner(
+            "Reading transcript and building knowledge base..."
+        ):
             get_chain(vid)
+
         if vid != st.session_state.video_id:
             st.session_state.messages = []
+
         st.session_state.video_id = vid
+        st.session_state.loaded_transcript = None
+        st.session_state.pending_video_id = None
+        st.session_state.transcript_error = None
+
         st.toast("Video ready! Ask away 🎉")
+
     except Exception as e:
-        st.error(f"Could not load this video: {e}")
+        if vid:
+            st.session_state.pending_video_id = vid
+            st.session_state.transcript_error = str(e)
+        else:
+            st.error(f"Invalid YouTube URL: {e}")
 
+
+if st.session_state.pending_video_id:
+    st.warning(
+        "Automatic transcript fetching failed. "
+        "You can paste the transcript below to continue."
+    )
+
+    with st.expander(
+        "Why did automatic loading fail?",
+        expanded=True
+    ):
+        st.caption(st.session_state.transcript_error)
+
+    with st.form("manual_transcript_form"):
+        manual_transcript = st.text_area(
+            "Paste video transcript here",
+            height=220,
+            placeholder=(
+                "Open the video's transcript on YouTube, "
+                "copy its text, and paste it here..."
+            )
+        )
+
+        submit_transcript = st.form_submit_button(
+            "Build chatbot from transcript",
+            use_container_width=True
+        )
+
+    if submit_transcript:
+        if not manual_transcript.strip():
+            st.error("Please paste a transcript first.")
+
+        else:
+            vid = st.session_state.pending_video_id
+
+            try:
+                with st.spinner(
+                    "Building knowledge base from transcript..."
+                ):
+                    get_chain(vid, manual_transcript.strip())
+
+                if vid != st.session_state.video_id:
+                    st.session_state.messages = []
+
+                st.session_state.video_id = vid
+                st.session_state.loaded_transcript = (
+                    manual_transcript.strip()
+                )
+                st.session_state.pending_video_id = None
+                st.session_state.transcript_error = None
+
+                st.success(
+                    "Transcript loaded successfully! "
+                    "You can now ask questions."
+                )
+
+            except Exception as e:
+                st.error(
+                    f"Could not build chatbot: {e}"
+                )
+                
 video_id = st.session_state.video_id
-chain = get_chain(video_id) if video_id else None
 
+chain = (
+    get_chain(
+        video_id,
+        st.session_state.loaded_transcript
+    )
+    if video_id
+    else None
+)
 # Quick-prompt click (if any), otherwise the chat box
 pending = st.session_state.pop("pending_q", None)
 typed = st.chat_input(
