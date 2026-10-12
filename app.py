@@ -57,6 +57,7 @@ THEMES = {
         "card": "rgba(255,255,255,0.06)",
         "border": "rgba(255,255,255,0.13)",
         "input": "rgba(255,255,255,0.08)",
+        "input_solid": "#1a1f3d",
         "a1": "#8b6cff", "a2": "#22d3ee",
         "shadow": "0 10px 40px rgba(0,0,0,0.45)",
         "orb": "0.45",
@@ -67,6 +68,7 @@ THEMES = {
         "card": "rgba(255,255,255,0.72)",
         "border": "rgba(108,76,255,0.18)",
         "input": "rgba(255,255,255,0.95)",
+        "input_solid": "#ffffff",
         "a1": "#6c4cff", "a2": "#0aa5d6",
         "shadow": "0 10px 35px rgba(108,76,255,0.15)",
         "orb": "0.35",
@@ -179,24 +181,25 @@ STATIC_CSS = """
     border-radius: 18px; padding: 1rem 1.2rem; margin-bottom: .8rem;
     backdrop-filter: blur(12px); animation: fadeUp .5s ease both;
 }
-[data-testid="stChatMessage"] {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 18px; padding: 1rem 1.2rem; margin-bottom: .8rem;
-    backdrop-filter: blur(12px); animation: fadeUp .5s ease both;
-}
-[data-testid="stBottom"] > div {background: transparent !important;}
+/* The bottom bar has its own solid background from Streamlit's base theme.
+   Make it transparent, and give the input a SOLID color so the typed text
+   is always readable. */
+[data-testid="stBottom"],
+[data-testid="stBottom"] > div,
+[data-testid="stBottomBlockContainer"] {background: transparent !important;}
 [data-testid="stChatInput"],
 [data-testid="stChatInput"] > div,
 [data-testid="stChatInput"] [data-baseweb="textarea"],
 [data-testid="stChatInput"] [data-baseweb="base-input"] {
-    background: var(--input) !important;
+    background: var(--input-solid) !important;
     border-radius: 18px !important;
 }
 [data-testid="stChatInput"] {
     border: 1px solid var(--border) !important;
     box-shadow: var(--shadow);
 }
-[data-testid="stChatInput"] textarea {
+[data-testid="stChatInput"] textarea,
+[data-testid="stChatInputTextArea"] {
     background: transparent !important;
     color: var(--text) !important;
     -webkit-text-fill-color: var(--text) !important;
@@ -254,7 +257,7 @@ def inject_theme(mode):
     variables = f""":root {{
         --bg1:{t['bg1']}; --bg2:{t['bg2']}; --bg3:{t['bg3']};
         --text:{t['text']}; --muted:{t['muted']};
-        --card:{t['card']}; --border:{t['border']}; --input:{t['input']};
+        --card:{t['card']}; --border:{t['border']}; --input:{t['input']}; --input-solid:{t['input_solid']};
         --a1:{t['a1']}; --a2:{t['a2']}; --shadow:{t['shadow']}; --orb:{t['orb']};
     }}"""
     st.markdown(f"<style>{variables}{STATIC_CSS}</style>", unsafe_allow_html=True)
@@ -370,7 +373,7 @@ if load_clicked:
         with st.spinner(
             "Reading transcript and building knowledge base..."
         ):
-            get_chain(vid)
+            get_chain(vid, None)
 
         if vid != st.session_state.video_id:
             st.session_state.messages = []
